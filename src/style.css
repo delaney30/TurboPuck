@@ -1,0 +1,42 @@
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --dkClr: #00004E;
+  --liClr: #EDEDF9;
+  --accClr: #1873D3;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  background-color: var(--accClr);
+  color: var(--liClr);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 100vh;
+}
+
+header, footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+  width: 100%;
+}
+
+#gameCanvas {
+  width: 1080px;
+  height: 1000;
+  display: block; 
+  margin-top: 20px;
+  border: 1px solid red;
+}
