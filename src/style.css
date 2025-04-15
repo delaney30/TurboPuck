@@ -34,9 +34,10 @@ header, footer {
 }
 
 #gameCanvas {
-  width: 1080px;
-  height: 1000;
-  display: block; 
+  width: 1080px;       
+  height: 500px;         
+  display: block;
   margin-top: 20px;
-  border: 1px solid red;
+  border: 1px solid red; 
 }
+
