@@ -1,4 +1,4 @@
-/* 
+/*
 <-Goals of the game->
 - home page for starting the game
 - have a hockey puck that needs to be shot into the net 
@@ -13,61 +13,103 @@
 import './style.css';
 import Phaser from 'phaser';
 
+// Set game screen dimensions
 const sizes = {
   width: 1000,
   height: 500
 };
 
+// Define the main game scene
 class GameScene extends Phaser.Scene {
   constructor() {
     super("scene-game");
-    this.player;
-    this.target;
-    this.angle = 0;
-    this.speed = 400;
+
+    // Declare game objects and variables
+    this.player;      
+    this.target;      
+    this.obstacles;   
+    this.angle = 0;   
+    this.speed = 400; 
+    this.shots = 0;   
   }
-  //Add all images into the game
+
   preload() {
+    // Load all assets
     this.load.image("bg", "assets/bg.png");
     this.load.image("puck", "assets/puck.png");
     this.load.image("net", "assets/net.png");
+    this.load.image("hockeyPlayer", "assets/player.png");
   }
 
   create() {
+    // Add background image and scale it to fit the screen
     const bg = this.add.image(0, 0, "bg").setOrigin(0, 0);
     bg.setDisplaySize(sizes.width, sizes.height);
 
-    // Move the puck usig physics 
-    this.player = this.physics.add.image(200, sizes.height - 100, "puck").setOrigin(0.5, 0.5).setScale(0.5);
-    this.player.setCollideWorldBounds(true);
-    this.player.setBounce(0);
-    this.player.setDrag(0.99);
-    this.player.setDamping(true);
+    // Create the puck (player)
+    this.player = this.physics.add.image(200, sizes.height - 100, "puck")
+      .setOrigin(0.5)
+      .setScale(0.5);
+    this.player.setCollideWorldBounds(true); // keep it within the screen
+    this.player.setBounce(0);                // make sure the puck doesnt bounce off the wall
+    this.player.setDrag(0.99);               // add friction
 
-    // Add the net
-    this.target = this.physics.add.staticImage(sizes.width - 80, 50, "net").setOrigin(0.8, 0.3).setScale(1.5);
+    // Stop the puck if it hits a wall by setting the velocity to 0
+    this.player.body.onWorldBounds = true;
+    this.physics.world.on("worldbounds", (body, up, down, left, right) => {
+      if (body.gameObject === this.player) {
+        this.player.setVelocity(0, 0);
+      }
+    });
 
-    // Add the aiming line
+    // Create the goal net
+    this.target = this.physics.add.staticImage(sizes.width - 80, 50, "net")
+      .setOrigin(0.8, 0.3)
+      .setScale(1.5);
+
+    // Add the aiming arrow 
     this.aimLine = this.add.graphics({ lineStyle: { width: 4, color: 0xff0000 } });
 
-    // Use they Keyboard to move and aim the puck
-    this.cursors = this.input.keyboard.createCursorKeys(); // Arrow keys
-    this.spaceBar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE); // Space bar for shooting
+    // Add a shot counter
+    this.shotText = this.add.text(20, 20, "Shots: 0", {
+      fontSize: "24px",
+      fill: "#ffffff"
+    });
+
+    // Add the players and set their positions 
+    this.obstacles = this.physics.add.staticGroup();
+    const positions = [
+      { x: 300, y: 200 },
+      { x: 600, y: 200 },
+      { x: 700, y: 400 }
+    ];
+    positions.forEach(pos => {
+      const obstacle = this.obstacles.create(pos.x, pos.y, "hockeyPlayer")
+        .setOrigin(0.5)
+        .setScale(0.05);
+      obstacle.refreshBody();
+    });
+
+    // Detect collisions between the puck and the obstacles
+    this.physics.add.collider(this.player, this.obstacles, this.handleObstacleCollision, null, this);
+
+    this.cursors = this.input.keyboard.createCursorKeys();
+    this.spaceBar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
   }
-
+// Use the left/right arrow keys to rotate the aiming angle back and fourth
   update() {
-
     if (this.cursors.left.isDown) {
-      this.angle -= 2; // Rotate counterclockwise
+      this.angle -= 2;
     }
     if (this.cursors.right.isDown) {
-      this.angle += 2; // Rotate clockwise
+      this.angle += 2;
     }
 
-    // Visualize the aiming line based on the current angle
-    let aimX = this.player.x + Math.cos(Phaser.Math.DegToRad(this.angle)) * 50;
-    let aimY = this.player.y + Math.sin(Phaser.Math.DegToRad(this.angle)) * 50;
+    // Calculate the direction pf the aiming line
+    const aimX = this.player.x + Math.cos(Phaser.Math.DegToRad(this.angle)) * 50;
+    const aimY = this.player.y + Math.sin(Phaser.Math.DegToRad(this.angle)) * 50;
 
+    // Draw the red aiming line
     this.aimLine.clear();
     this.aimLine.lineStyle(4, 0xff0000);
     this.aimLine.beginPath();
@@ -75,38 +117,48 @@ class GameScene extends Phaser.Scene {
     this.aimLine.lineTo(aimX, aimY);
     this.aimLine.strokePath();
 
-    // Shoot the puck when space bar is pressed
+    // Shoot the puck when the space bar is pressed
     if (Phaser.Input.Keyboard.JustDown(this.spaceBar)) {
-      let forceX = Math.cos(Phaser.Math.DegToRad(this.angle)) * this.speed;
-      let forceY = Math.sin(Phaser.Math.DegToRad(this.angle)) * this.speed;
+      const forceX = Math.cos(Phaser.Math.DegToRad(this.angle)) * this.speed;
+      const forceY = Math.sin(Phaser.Math.DegToRad(this.angle)) * this.speed;
 
       this.player.body.setVelocity(forceX, forceY);
-      console.log("Puck shot!");
+      this.shots++;
+      this.shotText.setText("Shots: " + this.shots);
     }
 
-    // Check for scoring (goal detection)
+    // Check to see if the puck has went into the net 
     if (Phaser.Geom.Intersects.RectangleToRectangle(this.player.getBounds(), this.target.getBounds())) {
       console.log('Goal scored!');
+      
+      // Reset puck after the puck goes into the net 
       this.time.delayedCall(1000, () => {
         this.player.setVelocity(0, 0);
         this.player.setPosition(200, sizes.height - 100);
       });
     }
   }
+
+  // When the puck hits a player, stop it by setting the velocity to 0
+  handleObstacleCollision = () => {
+    console.log("Oh no, you hit a hockey player!");
+    this.player.setVelocity(0, 0);
+  };
 }
 
+// Configure the Phaser game
 const config = {
-  type: Phaser.WEBGL,
+  type: Phaser.WEBGL,          
   width: sizes.width,
   height: sizes.height,
-  canvas: gameCanvas,
+  canvas: gameCanvas,           
   physics: {
-    default: "arcade",
+    default: "arcade",          
     arcade: {
-      debug: true,
-    },
+      debug: true              
+    }
   },
-  scene: [GameScene],
+  scene: [GameScene],          
 };
 
-const game = new Phaser.Game(config);           
+const game = new Phaser.Game(config);
