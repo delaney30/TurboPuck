@@ -1,15 +1,3 @@
-/*
-<-Goals of the game->
-- home page for starting the game
-- have a hockey puck that needs to be shot into the net 
-- have obstacles that the puck needs to do through
-- Aiming arrow for shooting accuracy 
-- Score tracker
-<-IF I HAVE TIME->
-- Maybe a goalie in the net to be an addisional blocker?
-- Power bar for faster shots 
-*/
-
 import './style.css';
 import Phaser from 'phaser';
 
@@ -18,6 +6,50 @@ const sizes = {
   width: 1000,
   height: 500
 };
+
+// Create a start screen (main menu) scene
+class MainMenu extends Phaser.Scene {
+  constructor() {
+    super("scene-mainmenu");
+  }
+
+  preload() {
+    // Load background image for start screen
+    this.load.image("bg", "assets/bg.png");
+  }
+
+  create() {
+    // Add background image and scale it to fit the screen
+    const bg = this.add.image(0, 0, "bg").setOrigin(0, 0);
+    bg.setDisplaySize(sizes.width, sizes.height);
+
+    // Add title text
+    this.add.text(sizes.width / 2, 100, "Turbo Puck", {
+      fontSize: "48px",
+      fill: "#ffffff"
+    }).setOrigin(0.5);
+
+    // Add start game button
+    const startButton = this.add.text(sizes.width / 2, 250, "Start Game", {
+      fontSize: "32px",
+      fill: "#00ff00",
+      backgroundColor: "#000000",
+      padding: { x: 20, y: 10 }
+    }).setOrigin(0.5).setInteractive();
+
+    startButton.on("pointerdown", () => {
+      this.scene.start("scene-game");
+    });
+
+    startButton.on("pointerover", () => {
+      startButton.setStyle({ fill: "#ffff00" });
+    });
+
+    startButton.on("pointerout", () => {
+      startButton.setStyle({ fill: "#00ff00" });
+    });
+  }
+}
 
 // Define the main game scene
 class GameScene extends Phaser.Scene {
@@ -96,7 +128,8 @@ class GameScene extends Phaser.Scene {
     this.cursors = this.input.keyboard.createCursorKeys();
     this.spaceBar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
   }
-// Use the left/right arrow keys to rotate the aiming angle back and fourth
+
+  // Use the left/right arrow keys to rotate the aiming angle back and fourth
   update() {
     if (this.cursors.left.isDown) {
       this.angle -= 2;
@@ -155,10 +188,11 @@ const config = {
   physics: {
     default: "arcade",          
     arcade: {
-      debug: true              
+      debug: false              
     }
   },
-  scene: [GameScene],          
+  scene: [MainMenu, GameScene],          
 };
 
 const game = new Phaser.Game(config);
+
