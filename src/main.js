@@ -87,10 +87,11 @@ class GameScene extends Phaser.Scene {
     this.player = this.physics.add.image(200, sizes.height - 100, "puck")
       .setOrigin(0.5)
       .setScale(0.5);
-    this.player.setCollideWorldBounds(true);
-    this.player.setBounce(0);
-    this.player.setDrag(0.99);
+    this.player.setCollideWorldBounds(true); // keep it within the screen
+    this.player.setBounce(0);                // make sure the puck doesn't bounce off the wall
+    this.player.setDrag(0.99);               // add friction
 
+    // Stop the puck if it hits a wall by setting the velocity to 0
     this.player.body.onWorldBounds = true;
     this.physics.world.on("worldbounds", (body, up, down, left, right) => {
       if (body.gameObject === this.player) {
@@ -104,7 +105,6 @@ class GameScene extends Phaser.Scene {
       .setScale(1.0, 1.2) 
       .setAngle(90); 
 
-
     // Add the aiming arrow 
     this.aimLine = this.add.graphics({ lineStyle: { width: 4, color: 0xff0000 } });
 
@@ -114,6 +114,15 @@ class GameScene extends Phaser.Scene {
       fontFamily: "'orbitron', sans-serif", 
       color: "#00ff00"
     });
+
+    // Add goal popup text (initially hidden)
+    this.goalText = this.add.text(sizes.width / 2, sizes.height / 2, "GOAL!", {
+      fontSize: "64px",
+      fontFamily: "'orbitron', sans-serif",
+      color: "#00ff00",
+      backgroundColor: "#000000",
+      padding: { x: 20, y: 10 }
+    }).setOrigin(0.5).setVisible(false).setDepth(1000); 
 
     // Add the players and set their positions 
     this.obstacles = this.physics.add.staticGroup();
@@ -132,15 +141,14 @@ class GameScene extends Phaser.Scene {
       obstacle.refreshBody();
     });
 
-
-    // Detect collisions between the puck and the obstacles
-    this.physics.add.collider(this.player, this.obstacles, this.handleObstacleCollision, null, this);
+    // Detect overlaps between the puck and the obstacles 
+    this.physics.add.overlap(this.player, this.obstacles, this.handleObstacleCollision, null, this);
 
     this.cursors = this.input.keyboard.createCursorKeys();
     this.spaceBar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
   }
 
-  // Use the left/right arrow keys to rotate the aiming angle back and fourth
+  // Use the left/right arrow keys to rotate the aiming angle back and forth
   update() {
     if (this.cursors.left.isDown) {
       this.angle -= 2;
@@ -149,7 +157,7 @@ class GameScene extends Phaser.Scene {
       this.angle += 2;
     }
 
-    // Calculate the direction pf the aiming line
+    // Calculate the direction of the aiming line
     const aimX = this.player.x + Math.cos(Phaser.Math.DegToRad(this.angle)) * 50;
     const aimY = this.player.y + Math.sin(Phaser.Math.DegToRad(this.angle)) * 50;
 
@@ -175,18 +183,23 @@ class GameScene extends Phaser.Scene {
     if (Phaser.Geom.Intersects.RectangleToRectangle(this.player.getBounds(), this.target.getBounds())) {
       console.log('Goal scored!');
 
+      // Show goal text
+      this.goalText.setVisible(true);
+
       // Reset puck after the puck goes into the net 
       this.time.delayedCall(1000, () => {
-        this.player.setVelocity(0, 0);
+        this.goalText.setVisible(false); // Hide the goal text when the puck isnt in the net
         this.player.setPosition(200, sizes.height - 100);
       });
     }
   }
 
   // When the puck hits a player, stop it by setting the velocity to 0
-  handleObstacleCollision = () => {
-    console.log("Oh no, you hit a hockey player!");
-    this.player.setVelocity(0, 0);
+  handleObstacleCollision = (puck, obstacle) => {
+    if (puck.body.speed > 0) {
+      console.log("Oh no, you hit a hockey player!");
+      this.player.setVelocity(0, 0);
+    }
   };
 }
 
@@ -199,7 +212,7 @@ const config = {
   physics: {
     default: "arcade",
     arcade: {
-      debug: true
+      debug: false
     }
   },
   scene: [MainMenu, GameScene],
