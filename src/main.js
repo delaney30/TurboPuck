@@ -57,12 +57,12 @@ class GameScene extends Phaser.Scene {
     super("scene-game");
 
     // Declare game objects and variables
-    this.player;      
-    this.target;      
-    this.obstacles;   
-    this.angle = 0;   
-    this.speed = 400; 
-    this.shots = 0;   
+    this.player;
+    this.target;
+    this.obstacles;
+    this.angle = 0;
+    this.speed = 400;
+    this.shots = 0;
   }
 
   preload() {
@@ -71,6 +71,11 @@ class GameScene extends Phaser.Scene {
     this.load.image("puck", "assets/puck.png");
     this.load.image("net", "assets/net.png");
     this.load.image("hockeyPlayer", "assets/player.png");
+    this.load.image("player1", "assets/anderson.png");
+    this.load.image("player2", "assets/kadri.png");
+    this.load.image("player3", "assets/weegar.png");
+    this.load.image("player4", "assets/kuzzy.png");
+    this.load.image("player5", "assets/mullen.png");
   }
 
   create() {
@@ -95,9 +100,11 @@ class GameScene extends Phaser.Scene {
     });
 
     // Create the goal net
-    this.target = this.physics.add.staticImage(sizes.width - 80, 50, "net")
-      .setOrigin(0.8, 0.3)
-      .setScale(1.5);
+    this.target = this.physics.add.staticImage(sizes.width - 80, 240, "net") 
+      .setOrigin(0.5) 
+      .setScale(1.0, 1.2) 
+      .setAngle(90); 
+
 
     // Add the aiming arrow 
     this.aimLine = this.add.graphics({ lineStyle: { width: 4, color: 0xff0000 } });
@@ -110,17 +117,21 @@ class GameScene extends Phaser.Scene {
 
     // Add the players and set their positions 
     this.obstacles = this.physics.add.staticGroup();
-    const positions = [
-      { x: 300, y: 200 },
-      { x: 600, y: 200 },
-      { x: 700, y: 400 }
+    const playerData = [
+      { x: 300, y: 100, key: "player1" },
+      { x: 700, y: 100, key: "player2" },
+      { x: 700, y: 400, key: "player3" },
+      { x: 500, y: 300, key: "player4" },
+      { x: 200, y: 400, key: "player5" },
     ];
-    positions.forEach(pos => {
-      const obstacle = this.obstacles.create(pos.x, pos.y, "hockeyPlayer")
+
+    playerData.forEach(data => {
+      const obstacle = this.obstacles.create(data.x, data.y, data.key)
         .setOrigin(0.5)
         .setScale(0.05);
       obstacle.refreshBody();
     });
+
 
     // Detect collisions between the puck and the obstacles
     this.physics.add.collider(this.player, this.obstacles, this.handleObstacleCollision, null, this);
@@ -163,7 +174,7 @@ class GameScene extends Phaser.Scene {
     // Check to see if the puck has went into the net 
     if (Phaser.Geom.Intersects.RectangleToRectangle(this.player.getBounds(), this.target.getBounds())) {
       console.log('Goal scored!');
-      
+
       // Reset puck after the puck goes into the net 
       this.time.delayedCall(1000, () => {
         this.player.setVelocity(0, 0);
@@ -181,17 +192,17 @@ class GameScene extends Phaser.Scene {
 
 // Configure the Phaser game
 const config = {
-  type: Phaser.WEBGL,          
+  type: Phaser.WEBGL,
   width: sizes.width,
   height: sizes.height,
-  canvas: gameCanvas,           
+  canvas: gameCanvas,
   physics: {
-    default: "arcade",          
+    default: "arcade",
     arcade: {
-      debug: false              
+      debug: false
     }
   },
-  scene: [MainMenu, GameScene],          
+  scene: [MainMenu, GameScene],
 };
 
 const game = new Phaser.Game(config);
