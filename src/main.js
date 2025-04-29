@@ -56,13 +56,15 @@ class GameScene extends Phaser.Scene {
   constructor() {
     super("scene-game");
 
-    // Declare game objects and variables
+    // add a goal counter each time the puck hits the net
     this.player;
     this.target;
     this.obstacles;
     this.angle = 0;
     this.speed = 400;
     this.shots = 0;
+    this.score = 0; 
+    this.goalScored = false; 
   }
 
   preload() {
@@ -115,7 +117,14 @@ class GameScene extends Phaser.Scene {
       color: "#00ff00"
     });
 
-    // Add goal popup text (initially hidden)
+    // Add a goal counter
+    this.scoreText = this.add.text(20, 50, "Goals: 0", {
+      fontSize: "24px",
+      fontFamily: "'orbitron', sans-serif",
+      color: "#00ff00"
+    });
+
+    // Add goal popup text 
     this.goalText = this.add.text(sizes.width / 2, sizes.height / 2, "GOAL!", {
       fontSize: "64px",
       fontFamily: "'orbitron', sans-serif",
@@ -141,14 +150,13 @@ class GameScene extends Phaser.Scene {
       obstacle.refreshBody();
     });
 
-    // Detect overlaps between the puck and the obstacles 
+    // Detect overlaps between the puck and the obstacles
     this.physics.add.overlap(this.player, this.obstacles, this.handleObstacleCollision, null, this);
 
     this.cursors = this.input.keyboard.createCursorKeys();
     this.spaceBar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
   }
 
-  // Use the left/right arrow keys to rotate the aiming angle back and forth
   update() {
     if (this.cursors.left.isDown) {
       this.angle -= 2;
@@ -179,18 +187,31 @@ class GameScene extends Phaser.Scene {
       this.shotText.setText("Shots: " + this.shots);
     }
 
-    // Check to see if the puck has went into the net 
+    // Check if the puck has gone into the net (only if no goal has been scored yet)
     if (Phaser.Geom.Intersects.RectangleToRectangle(this.player.getBounds(), this.target.getBounds())) {
-      console.log('Goal scored!');
+      if (!this.goalScored) {  
+        console.log('Goal scored!');
 
-      // Show goal text
-      this.goalText.setVisible(true);
+        // Show goal text
+        this.goalText.setVisible(true);
 
-      // Reset puck after the puck goes into the net 
-      this.time.delayedCall(1000, () => {
-        this.goalText.setVisible(false); // Hide the goal text when the puck isnt in the net
-        this.player.setPosition(200, sizes.height - 100);
-      });
+        // Increase the score by one and update the goal text
+        this.score++; 
+        this.scoreText.setText("Goals: " + this.score); 
+
+        // Mark down that a goal was scored
+        this.goalScored = true;
+
+        // Reset puck after scoring
+        this.time.delayedCall(1000, () => {
+          this.goalText.setVisible(false);
+          this.player.setVelocity(0, 0);
+          this.player.setPosition(200, sizes.height - 100);
+
+          // Reset goal scored 
+          this.goalScored = false;
+        });
+      }
     }
   }
 
