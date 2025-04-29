@@ -26,7 +26,7 @@ class MainMenu extends Phaser.Scene {
     // Add title text
     this.add.text(sizes.width / 2, 100, "Turbo Puck", {
       fontSize: "48px",
-      fill: "#ffffff"
+      fill: "black"
     }).setOrigin(0.5);
 
     // Add start game button
@@ -87,11 +87,10 @@ class GameScene extends Phaser.Scene {
     this.player = this.physics.add.image(200, sizes.height - 100, "puck")
       .setOrigin(0.5)
       .setScale(0.5);
-    this.player.setCollideWorldBounds(true); // keep it within the screen
-    this.player.setBounce(0);                // make sure the puck doesnt bounce off the wall
-    this.player.setDrag(0.99);               // add friction
+    this.player.setCollideWorldBounds(true);
+    this.player.setBounce(0);
+    this.player.setDrag(0.99);
 
-    // Stop the puck if it hits a wall by setting the velocity to 0
     this.player.body.onWorldBounds = true;
     this.physics.world.on("worldbounds", (body, up, down, left, right) => {
       if (body.gameObject === this.player) {
@@ -112,7 +111,8 @@ class GameScene extends Phaser.Scene {
     // Add a shot counter
     this.shotText = this.add.text(20, 20, "Shots: 0", {
       fontSize: "24px",
-      fill: "#ffffff"
+      fontFamily: "'orbitron', sans-serif", 
+      color: "#00ff00"
     });
 
     // Add the players and set their positions 
@@ -122,7 +122,7 @@ class GameScene extends Phaser.Scene {
       { x: 700, y: 100, key: "player2" },
       { x: 700, y: 400, key: "player3" },
       { x: 500, y: 300, key: "player4" },
-      { x: 200, y: 400, key: "player5" },
+      { x: 100, y: 350, key: "player5" },
     ];
 
     playerData.forEach(data => {
@@ -199,11 +199,10 @@ const config = {
   physics: {
     default: "arcade",
     arcade: {
-      debug: false
+      debug: true
     }
   },
   scene: [MainMenu, GameScene],
 };
 
 const game = new Phaser.Game(config);
-

@@ -41,3 +41,12 @@ header, footer {
   border: 1px solid red; 
 }
 
+.retro-text {
+  font-family: 'orbitron', sans-serif;
+  font-size: 24px;
+  color: #00ff00;
+  -webkit-text-stroke: 1px black;
+  text-shadow: 2px 2px #000000;
+}
+
+
